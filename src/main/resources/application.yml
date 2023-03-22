@@ -1,0 +1,17 @@
+micronaut:
+  application:
+    name: shopping
+netty:
+  default:
+    allocator:
+      max-order: 3
+
+datasources:
+  default:
+    dialect: MYSQL
+    driverClassName: com.mysql.cj.jdbc.Driver
+
+flyway:
+  datasources:
+    default:
+      enabled: true
