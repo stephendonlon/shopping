@@ -8,5 +8,5 @@ import io.micronaut.data.repository.PageableRepository
 @JdbcRepository(dialect = Dialect.MYSQL)
 abstract class CartEventRepository : PageableRepository<CartEvent, Long> {
 
-    abstract fun findByCartId(cartId: String): List<CartEvent>
+    abstract fun findByCartIdOrderByCreatedTimeAsc(cartId: String): List<CartEvent>
 }

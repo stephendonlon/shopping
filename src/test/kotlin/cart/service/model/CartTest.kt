@@ -79,4 +79,77 @@ class CartTest {
         assertEquals(0, cart.items.size)
         assertEquals(BigDecimal.ZERO, cart.total)
     }
+
+    @Test
+    fun `should create a cart with correct items after processing add and remove events`() {
+        val cartEvents = listOf(
+            CartEvent(
+                1L,
+                "cart1",
+                createPayloadString(Product("product1", "Product 1", BigDecimal(10)), 2),
+                LocalDateTime.now(),
+                EventType.ADD
+            ),
+            CartEvent(
+                2L,
+                "cart1",
+                createPayloadString(Product("product2", "Product 2", BigDecimal(5)), 1),
+                LocalDateTime.now(),
+                EventType.ADD
+            ),
+            CartEvent(
+                3L,
+                "cart1",
+                createPayloadString(Product("product1", "Product 1", BigDecimal(10)), 1),
+                LocalDateTime.now(),
+                EventType.REMOVE
+            )
+        )
+
+        val cart = Cart(cartEvents, objectMapper)
+
+        assertEquals("cart1", cart.id)
+        assertEquals(2, cart.items.size)
+        assertEquals(BigDecimal(15), cart.total)
+    }
+
+    @Test
+    fun `should create a cart with empty not-null items of size 0 when products are removed`() {
+        val cartEvents = listOf(
+            CartEvent(
+                1L,
+                "cart1",
+                createPayloadString(Product("product1", "Product 1", BigDecimal(10)), 2),
+                LocalDateTime.now(),
+                EventType.ADD
+            ),
+            CartEvent(
+                2L,
+                "cart1",
+                createPayloadString(Product("product2", "Product 2", BigDecimal(5)), 1),
+                LocalDateTime.now(),
+                EventType.ADD
+            ),
+            CartEvent(
+                3L,
+                "cart1",
+                createPayloadString(Product("product1", "Product 1", BigDecimal(10)), 2),
+                LocalDateTime.now(),
+                EventType.REMOVE
+            ),
+            CartEvent(
+                4L,
+                "cart1",
+                createPayloadString(Product("product2", "Product 2", BigDecimal(5)), 1),
+                LocalDateTime.now(),
+                EventType.REMOVE
+            )
+        )
+
+        val cart = Cart(cartEvents, objectMapper)
+
+        assertEquals("cart1", cart.id)
+        assertEquals(0, cart.items.size)
+        assertEquals(BigDecimal.ZERO, cart.total)
+    }
 }

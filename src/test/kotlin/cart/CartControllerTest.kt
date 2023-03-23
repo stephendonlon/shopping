@@ -1,6 +1,7 @@
 package cart
 
-import cart.service.model.command.AddToCartCommand
+import cart.service.model.command.CartCommand
+import cart.service.model.event.EventType
 import cart.service.model.product.Product
 import io.micronaut.serde.ObjectMapper
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest
@@ -15,12 +16,18 @@ class CartControllerTest {
 
     @Test
     fun `test createCart`(spec: RequestSpecification, objectMapper: ObjectMapper) {
-        val addToCartCommand =
-            objectMapper.writeValueAsString(AddToCartCommand(Product("1", "product1", BigDecimal.TEN), 1))
+        val cartCommand =
+            objectMapper.writeValueAsString(
+                CartCommand(
+                    Product("1", "product1", BigDecimal.TEN),
+                    1,
+                    EventType.ADD
+                )
+            )
 
         spec
             .contentType("application/json")
-            .body(addToCartCommand)
+            .body(cartCommand)
             .`when`()
             .post("/carts")
             .then()
@@ -31,12 +38,18 @@ class CartControllerTest {
     @Test
     fun `test addToCart`(spec: RequestSpecification, objectMapper: ObjectMapper) {
         val cartId = "testCartId2"
-        val addToCartCommand =
-            objectMapper.writeValueAsString(AddToCartCommand(Product("1", "product1", BigDecimal.TEN), 1))
+        val cartCommand =
+            objectMapper.writeValueAsString(
+                CartCommand(
+                    Product("1", "product1", BigDecimal.TEN),
+                    1,
+                    EventType.ADD
+                )
+            )
 
         spec
             .contentType("application/json")
-            .body(addToCartCommand)
+            .body(cartCommand)
             .`when`()
             .post("/carts/$cartId")
             .then()
@@ -46,12 +59,18 @@ class CartControllerTest {
     @Test
     fun `test getCart`(spec: RequestSpecification, objectMapper: ObjectMapper) {
         val cartId = "testCartId3"
-        val addToCartCommand =
-            objectMapper.writeValueAsString(AddToCartCommand(Product("1", "product1", BigDecimal.TEN), 1))
+        val cartCommand =
+            objectMapper.writeValueAsString(
+                CartCommand(
+                    Product("1", "product1", BigDecimal.TEN),
+                    1,
+                    EventType.ADD
+                )
+            )
 
         spec
             .contentType("application/json")
-            .body(addToCartCommand)
+            .body(cartCommand)
             .`when`()
             .post("/carts/$cartId")
             .then()
@@ -67,4 +86,58 @@ class CartControllerTest {
             .body("items[0].quantity", equalTo(1))
     }
 
+    @Test
+    fun `test remove item from cart`(spec: RequestSpecification, objectMapper: ObjectMapper) {
+        val cartId = "testCartId4"
+        val cartCommand =
+            objectMapper.writeValueAsString(
+                CartCommand(
+                    Product("1", "product1", BigDecimal.TEN),
+                    1,
+                    EventType.ADD
+                )
+            )
+
+        spec
+            .contentType("application/json")
+            .body(cartCommand)
+            .`when`()
+            .post("/carts/$cartId")
+            .then()
+            .statusCode(200)
+
+        spec
+            .`when`()
+            .get("/carts/$cartId")
+            .then()
+            .statusCode(200)
+            .body("id", equalTo(cartId))
+            .body("items[0].product.id", equalTo("1"))
+            .body("items[0].quantity", equalTo(1))
+
+        val removeCommand =
+            objectMapper.writeValueAsString(
+                CartCommand(
+                    Product("1", "product1", BigDecimal.TEN),
+                    1,
+                    EventType.REMOVE
+                )
+            )
+
+        spec
+            .contentType("application/json")
+            .body(removeCommand)
+            .`when`()
+            .post("/carts/$cartId")
+            .then()
+            .statusCode(200)
+
+        spec
+            .`when`()
+            .get("/carts/$cartId")
+            .then()
+            .statusCode(200)
+            .body("id", equalTo(cartId))
+            .body("items", equalTo(null))
+    }
 }

@@ -2,7 +2,7 @@ package cart.controller
 
 import cart.service.CartService
 import cart.service.model.Cart
-import cart.service.model.command.AddToCartCommand
+import cart.service.model.command.CartCommand
 import io.micronaut.http.HttpResponse
 import io.micronaut.http.MediaType
 import io.micronaut.http.annotation.*
@@ -13,20 +13,20 @@ import java.util.*
 class CartController(@Inject private val cartService: CartService) {
 
     @Post(consumes = [MediaType.APPLICATION_JSON], produces = [MediaType.APPLICATION_JSON])
-    fun createCart(@Body addToCartCommand: AddToCartCommand): HttpResponse<Map<String, String>> {
+    fun createCart(@Body cartCommand: CartCommand): HttpResponse<Map<String, String>> {
 
-        val cartEvent = cartService.addToNewCart(addToCartCommand)
+        val cartEvent = cartService.addToNewCart(cartCommand)
 
         return HttpResponse.ok(mapOf("cartId" to cartEvent.cartId))
     }
 
     @Post("/{id}")
-    fun addToCart(
+    fun updateCart(
         @PathVariable(name = "id") id: String,
-        @Body addToCartCommand: AddToCartCommand
+        @Body cartCommand: CartCommand
     ): HttpResponse<String> {
 
-        cartService.addToCart(addToCartCommand, id)
+        cartService.update(cartCommand, id)
 
         return HttpResponse.ok()
     }
@@ -36,5 +36,4 @@ class CartController(@Inject private val cartService: CartService) {
 
         return HttpResponse.ok(cartService.getCart(id))
     }
-
 }

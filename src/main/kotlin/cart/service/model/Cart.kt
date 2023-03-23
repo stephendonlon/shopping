@@ -1,6 +1,7 @@
 package cart.service.model
 
 import cart.service.model.event.CartEvent
+import cart.service.model.event.EventType
 import io.micronaut.serde.ObjectMapper
 import io.micronaut.serde.annotation.Serdeable
 import java.math.BigDecimal
@@ -16,12 +17,29 @@ class Cart(cartEvents: List<CartEvent>, private val objectMapper: ObjectMapper) 
         }
     }
 
-    private val itemsMap: Map<String, CartItem> = cartEvents.map { event ->
-        objectMapper.readValue(event.payload, CartItem::class.java)
-    }.groupBy { it?.product!!.id }
-        .mapValues { (_, items) ->
-            CartItem(items.first()!!.product, items.sumOf { it!!.quantity })
+    private val itemsMap: Map<String, CartItem> = cartEvents
+        .fold(mutableMapOf()) { acc, event ->
+            val cartItem = objectMapper.readValue(event.payload, CartItem::class.java)
+            val productId = cartItem!!.product.id
+            val currentQuantity = acc[productId]?.quantity ?: 0
+
+            when (event.eventType) {
+                EventType.ADD -> {
+                    val updatedQuantity = currentQuantity + cartItem.quantity
+                    acc[productId] = CartItem(cartItem.product, updatedQuantity)
+                }
+                EventType.REMOVE -> {
+                    val updatedQuantity = currentQuantity - cartItem.quantity
+                    if (updatedQuantity > 0) {
+                        acc[productId] = CartItem(cartItem.product, updatedQuantity)
+                    } else {
+                        acc.remove(productId)
+                    }
+                }
+            }
+            acc
         }
+
 
     val items: Set<CartItem>
         get() = itemsMap.values.toSet()
